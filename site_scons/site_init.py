@@ -41,6 +41,9 @@
 from __future__ import print_function
 from gem5_python_paths import extra_python_paths
 
+import sys
+sys.path[1:1] = extra_python_paths
+
 # Check for recent-enough Python and SCons versions.
 try:
     # Really old versions of scons only take two options for the
@@ -67,4 +70,4 @@ rearranging your PATH so that scons finds the non-default 'python' and
 """)
     raise
 
-sys.path[1:1] = extra_python_paths
+

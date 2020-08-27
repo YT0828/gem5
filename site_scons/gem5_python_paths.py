@@ -39,7 +39,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import SCons.Node.FS
-
+import sys
 fs = SCons.Node.FS.get_default_fs()
 root = fs.Dir('#')
 extra_python_nodes = [
