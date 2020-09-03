@@ -73,7 +73,7 @@ class LockedAddr {
     Addr addr;
 
     // locking hw context
-    const ContextID contextId;
+    const ContextID contextId; //unique thread context ID
 
     static Addr mask(Addr paddr) { return (paddr & ~Addr_Mask); }
 
@@ -103,7 +103,7 @@ class LockedAddr {
  */
 class AbstractMemory : public ClockedObject
 {
-  protected:
+  protected: //change from private to protected, to make them accessible.
 
     // Address range of this memory
     AddrRange range;
@@ -150,6 +150,7 @@ class AbstractMemory : public ClockedObject
             bool isLLSC = pkt->isLLSC();
             if (isLLSC) {
                 req->setExtraData(0);
+                //if is LLSC, record the fail of conditional store
             }
             return !isLLSC; // only do write if not an sc
         } else {

@@ -61,7 +61,7 @@
 class SimpleMemory : public AbstractMemory
 {
 
-  private:
+  protected: //change from private to protected, to make them accessible.
 
     /**
      * A deferred packet stores a packet along with its scheduled
@@ -158,12 +158,6 @@ class SimpleMemory : public AbstractMemory
 
     EventFunctionWrapper dequeueEvent;
 
-    /**
-     * Detemine the latency.
-     *
-     * @return the latency seen by the current packet
-     */
-    Tick getLatency() const;
 
     /**
      * Upstream caches need this packet until true is returned, so
@@ -187,6 +181,12 @@ class SimpleMemory : public AbstractMemory
     void recvFunctional(PacketPtr pkt);
     bool recvTimingReq(PacketPtr pkt);
     void recvRespRetry();
+     /**
+     * Detemine the latency.
+     *
+     * @return the latency seen by the current packet
+     */
+    Tick getLatency() const;
 };
 
 #endif //__MEM_SIMPLE_MEMORY_HH__
