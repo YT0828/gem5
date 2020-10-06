@@ -99,8 +99,9 @@ class SecondChanceRP : public FIFORP
      *
      * @param replacement_data Replacement data to be touched.
      */
-    void touch(const std::shared_ptr<ReplacementData>& replacement_data) const
-                                                                     override;
+    void touch(
+      const std::shared_ptr<ReplacementData>& replacement_data,
+      int access_type) const override;
 
     /**
      * Reset replacement data. Used when an entry is inserted or re-inserted

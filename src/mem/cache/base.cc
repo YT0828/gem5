@@ -1038,8 +1038,12 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                   name());
 
     // Access block in the tags
+    int access_type = -1;
+    if (pkt->isWrite()) access_type = 1;
+    else if (pkt->isRead()) access_type = 0;
     Cycles tag_latency(0);
-    blk = tags->accessBlock(pkt->getAddr(), pkt->isSecure(), tag_latency);
+    blk = tags->accessBlock(pkt->getAddr(), pkt->isSecure(),
+    tag_latency, access_type);
 
     DPRINTF(Cache, "%s for %s %s\n", __func__, pkt->print(),
             blk ? "hit " + blk->print() : "miss");

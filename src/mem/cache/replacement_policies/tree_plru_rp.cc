@@ -130,8 +130,9 @@ TreePLRURP::invalidate(
 }
 
 void
-TreePLRURP::touch(const std::shared_ptr<ReplacementData>& replacement_data)
-const
+TreePLRURP::touch(
+    const std::shared_ptr<ReplacementData>& replacement_data,
+    int access_type) const
 {
     // Cast replacement data
     std::shared_ptr<TreePLRUReplData> treePLRU_replacement_data =

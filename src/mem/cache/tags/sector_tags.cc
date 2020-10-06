@@ -132,7 +132,11 @@ SectorTags::invalidate(CacheBlk *blk)
 }
 
 CacheBlk*
-SectorTags::accessBlock(Addr addr, bool is_secure, Cycles &lat)
+SectorTags::accessBlock(
+    Addr addr,
+    bool is_secure,
+    Cycles &lat,
+    int access_type)
 {
     CacheBlk *blk = findBlock(addr, is_secure);
 
@@ -159,7 +163,7 @@ SectorTags::accessBlock(Addr addr, bool is_secure, Cycles &lat)
 
         // Update replacement data of accessed block, which is shared with
         // the whole sector it belongs to
-        replacementPolicy->touch(sector_blk->replacementData);
+        replacementPolicy->touch(sector_blk->replacementData, access_type);
     }
 
     // The tag lookup latency is the same for a hit or a miss
@@ -179,7 +183,9 @@ SectorTags::insertBlock(const PacketPtr pkt, CacheBlk *blk)
     // sector was not previously present in the cache.
     if (sector_blk->isValid()) {
         // An existing entry's replacement data is just updated
-        replacementPolicy->touch(sector_blk->replacementData);
+        replacementPolicy->touch(
+            sector_blk->replacementData, 1);
+        // 1 for write access_type
     } else {
         // Increment tag counter
         stats.tagsInUse++;

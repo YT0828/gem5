@@ -60,10 +60,11 @@ SecondChanceRP::invalidate(
 }
 
 void
-SecondChanceRP::touch(const std::shared_ptr<ReplacementData>&
-                                                    replacement_data) const
+SecondChanceRP::touch(
+    const std::shared_ptr<ReplacementData>& replacement_data,
+    int access_type) const
 {
-    FIFORP::touch(replacement_data);
+    FIFORP::touch(replacement_data, access_type);
 
     // Whenever an entry is touched, it is given a second chance
     std::static_pointer_cast<SecondChanceReplData>(

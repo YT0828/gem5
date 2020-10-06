@@ -134,14 +134,14 @@ FALRU::invalidate(CacheBlk *blk)
 }
 
 CacheBlk*
-FALRU::accessBlock(Addr addr, bool is_secure, Cycles &lat)
+FALRU::accessBlock(Addr addr, bool is_secure, Cycles &lat, int access_type)
 {
     return accessBlock(addr, is_secure, lat, 0);
 }
 
 CacheBlk*
 FALRU::accessBlock(Addr addr, bool is_secure, Cycles &lat,
-                   CachesMask *in_caches_mask)
+                   CachesMask *in_caches_mask, int access_type)
 {
     CachesMask mask = 0;
     FALRUBlk* blk = static_cast<FALRUBlk*>(findBlock(addr, is_secure));

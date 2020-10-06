@@ -26,16 +26,16 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mem/cache/replacement_policies/brrip_rp.hh"
+#include "mem/cache/replacement_policies/brrip_spm.hh"
 
 #include <cassert>
 #include <memory>
 
 #include "base/logging.hh" // For fatal_if
 #include "base/random.hh"
-#include "params/BRRIPRP.hh"
+#include "params/BRRIPSPM.hh"
 
-BRRIPRP::BRRIPRP(const Params *p)
+BRRIPSPM::BRRIPSPM(const Params *p)
     : BaseReplacementPolicy(p),
       numRRPVBits(p->num_bits), hitPriority(p->hit_priority), btp(p->btp)
 {
@@ -43,23 +43,23 @@ BRRIPRP::BRRIPRP(const Params *p)
 }
 
 void
-BRRIPRP::invalidate(const std::shared_ptr<ReplacementData>& replacement_data)
+BRRIPSPM::invalidate(const std::shared_ptr<ReplacementData>& replacement_data)
 const
 {
-    std::shared_ptr<BRRIPReplData> casted_replacement_data =
-        std::static_pointer_cast<BRRIPReplData>(replacement_data);
+    std::shared_ptr<BRRIPSPMeplData> casted_replacement_data =
+        std::static_pointer_cast<BRRIPSPMeplData>(replacement_data);
 
     // Invalidate entry
     casted_replacement_data->valid = false;
 }
 
 void
-BRRIPRP::touch(
+BRRIPSPM::touch(
     const std::shared_ptr<ReplacementData>& replacement_data,
-    int access_type = -1) const
+    int access_type) const
 {
-    std::shared_ptr<BRRIPReplData> casted_replacement_data =
-        std::static_pointer_cast<BRRIPReplData>(replacement_data);
+    std::shared_ptr<BRRIPSPMeplData> casted_replacement_data =
+        std::static_pointer_cast<BRRIPSPMeplData>(replacement_data);
 
     // Update RRPV if not 0 yet
     // Every hit in HP mode makes the entry the last to be evicted, while
@@ -69,13 +69,24 @@ BRRIPRP::touch(
     } else {
         casted_replacement_data->rrpv--;
     }
+    // Todo: update PR if not saturated yet.
+    // If it is a read access, pr++
+    // Otherwise, set pr to 0
+    if (access_type == 1) {
+        //write, should reset it to 0.
+        casted_replacement_data->pr.reset();
+    }
+    else if (access_type == 0){
+        casted_replacement_data->pr++;
+    }
+
 }
 
 void
-BRRIPRP::reset(const std::shared_ptr<ReplacementData>& replacement_data) const
+BRRIPSPM::reset(const std::shared_ptr<ReplacementData>& replacement_data) const
 {
-    std::shared_ptr<BRRIPReplData> casted_replacement_data =
-        std::static_pointer_cast<BRRIPReplData>(replacement_data);
+    std::shared_ptr<BRRIPSPMeplData> casted_replacement_data =
+        std::static_pointer_cast<BRRIPSPMeplData>(replacement_data);
 
     // Reset RRPV
     // Replacement data is inserted as "long re-reference" if lower than btp,
@@ -85,12 +96,44 @@ BRRIPRP::reset(const std::shared_ptr<ReplacementData>& replacement_data) const
         casted_replacement_data->rrpv--;
     }
 
+    // Todo: Reset PR
+    casted_replacement_data->pr.reset();
     // Mark entry as ready to be used
     casted_replacement_data->valid = true;
 }
 
 ReplaceableEntry*
-BRRIPRP::getVictim(const ReplacementCandidates& candidates) const
+BRRIPSPM::getVictim(const ReplacementCandidates& candidates) const
+{
+    // There must be at least one replacement candidate
+    assert(candidates.size() > 0);
+
+    // Use first candidate as dummy victim
+    ReplaceableEntry* victim = candidates[0];
+
+    // Visit all candidates to find victim
+    for (const auto& candidate : candidates) {
+        std::shared_ptr<BRRIPSPMeplData> candidate_repl_data =
+            std::static_pointer_cast<BRRIPSPMeplData>(
+                candidate->replacementData);
+
+        // Stop searching for victims if an invalid entry is found
+        if (!candidate_repl_data->valid) {
+            return candidate;
+        }
+        // If the pr greater than PR_threshold,
+        // means it is read-intense block
+        if (candidate_repl_data->pr >= PR_threshold){
+            //Todo: To find a read-intense page
+            return candidate;
+        }
+    }
+
+    victim = getRRPVVictim(candidates);
+    return victim;
+}
+ReplaceableEntry*
+BRRIPSPM::getRRPVVictim(const ReplacementCandidates& candidates) const
 {
     // There must be at least one replacement candidate
     assert(candidates.size() > 0);
@@ -99,13 +142,13 @@ BRRIPRP::getVictim(const ReplacementCandidates& candidates) const
     ReplaceableEntry* victim = candidates[0];
 
     // Store victim->rrpv in a variable to improve code readability
-    int victim_RRPV = std::static_pointer_cast<BRRIPReplData>(
+    int victim_RRPV = std::static_pointer_cast<BRRIPSPMeplData>(
                         victim->replacementData)->rrpv;
 
     // Visit all candidates to find victim
     for (const auto& candidate : candidates) {
-        std::shared_ptr<BRRIPReplData> candidate_repl_data =
-            std::static_pointer_cast<BRRIPReplData>(
+        std::shared_ptr<BRRIPSPMeplData> candidate_repl_data =
+            std::static_pointer_cast<BRRIPSPMeplData>(
                 candidate->replacementData);
 
         // Stop searching for victims if an invalid entry is found
@@ -123,29 +166,28 @@ BRRIPRP::getVictim(const ReplacementCandidates& candidates) const
 
     // Get difference of victim's RRPV to the highest possible RRPV in
     // order to update the RRPV of all the other entries accordingly
-    int diff = std::static_pointer_cast<BRRIPReplData>(
+    int diff = std::static_pointer_cast<BRRIPSPMeplData>(
         victim->replacementData)->rrpv.saturate();
 
     // No need to update RRPV if there is no difference
     if (diff > 0){
         // Update RRPV of all candidates
         for (const auto& candidate : candidates) {
-            std::static_pointer_cast<BRRIPReplData>(
+            std::static_pointer_cast<BRRIPSPMeplData>(
                 candidate->replacementData)->rrpv += diff;
         }
     }
 
     return victim;
 }
-
 std::shared_ptr<ReplacementData>
-BRRIPRP::instantiateEntry()
+BRRIPSPM::instantiateEntry()
 {
-    return std::shared_ptr<ReplacementData>(new BRRIPReplData(numRRPVBits));
+    return std::shared_ptr<ReplacementData>(new BRRIPSPMeplData(numRRPVBits));
 }
 
-BRRIPRP*
-BRRIPRPParams::create()
+BRRIPSPM*
+BRRIPSPMParams::create()
 {
-    return new BRRIPRP(this);
+    return new BRRIPSPM(this);
 }

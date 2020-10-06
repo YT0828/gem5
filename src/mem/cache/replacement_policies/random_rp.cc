@@ -49,7 +49,9 @@ const
 }
 
 void
-RandomRP::touch(const std::shared_ptr<ReplacementData>& replacement_data) const
+RandomRP::touch(
+    const std::shared_ptr<ReplacementData>& replacement_data,
+    int access_type) const
 {
 }
 

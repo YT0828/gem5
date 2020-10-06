@@ -47,7 +47,9 @@ const
 }
 
 void
-LFURP::touch(const std::shared_ptr<ReplacementData>& replacement_data) const
+LFURP::touch(
+    const std::shared_ptr<ReplacementData>& replacement_data,
+    int access_type = -1) const
 {
     // Update reference count
     std::static_pointer_cast<LFUReplData>(replacement_data)->refCount++;

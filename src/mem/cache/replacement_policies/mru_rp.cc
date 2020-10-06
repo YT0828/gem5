@@ -48,7 +48,9 @@ const
 }
 
 void
-MRURP::touch(const std::shared_ptr<ReplacementData>& replacement_data) const
+MRURP::touch(
+    const std::shared_ptr<ReplacementData>& replacement_data,
+    int access_type = -1) const
 {
     // Update last touch timestamp
     std::static_pointer_cast<MRUReplData>(

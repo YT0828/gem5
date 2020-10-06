@@ -8,8 +8,9 @@ class ScratchpadMemory(SimpleMemory):
     port = SlavePort("Slave ports")
     latency_write = Param.Latency('10ns', "Write latency in SPM")
     latency_read = Param.Latency('2ns', "Read latency in SPM")
-    latency_write_var =
-        Param.Latency('0ns', "Request to response latency variance")
+    latency_write_var = Param.Latency(
+        '0ns',
+        "Request to response latency variance")
 
     energy_read = Param.Float('100', "Energy for each reading (pJ)")
     energy_write = Param.Float('600', "Energy for each writting (pJ)")

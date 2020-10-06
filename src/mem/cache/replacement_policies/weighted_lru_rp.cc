@@ -49,8 +49,9 @@ WeightedLRURPParams::create()
 }
 
 void
-WeightedLRUPolicy::touch(const std::shared_ptr<ReplacementData>&
-                                                  replacement_data) const
+WeightedLRUPolicy::touch(
+    const std::shared_ptr<ReplacementData>& replacement_data,
+    int access_type) const
 {
     std::static_pointer_cast<WeightedLRUReplData>(replacement_data)->
                                                  last_touch_tick = curTick();
@@ -58,7 +59,7 @@ WeightedLRUPolicy::touch(const std::shared_ptr<ReplacementData>&
 
 void
 WeightedLRUPolicy::touch(const std::shared_ptr<ReplacementData>&
-                        replacement_data, int occupancy) const
+                        replacement_data, int occupancy, int access_type) const
 {
     std::static_pointer_cast<WeightedLRUReplData>(replacement_data)->
                                                   last_touch_tick = curTick();

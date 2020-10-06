@@ -99,3 +99,14 @@ class WeightedLRURP(BaseReplacementPolicy):
     type = "WeightedLRURP"
     cxx_class = "WeightedLRUPolicy"
     cxx_header = "mem/cache/replacement_policies/weighted_lru_rp.hh"
+
+# Todo: create our replacement policy
+class BRRIPSPM(BaseReplacementPolicy):
+    type = 'BRRIPSPM'
+    cxx_class = 'BRRIPSPM'
+    cxx_header = "mem/cache/replacement_policies/brrip_spm.hh"
+    num_bits = Param.Int(2, "Number of bits per RRPV")
+    hit_priority = Param.Bool(True,
+        "Prioritize evicting blocks that havent had a hit recently")
+    btp = Param.Percent(100,
+        "Percentage of blocks to be inserted with long RRPV")

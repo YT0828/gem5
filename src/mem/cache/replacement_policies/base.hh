@@ -72,10 +72,14 @@ class BaseReplacementPolicy : public SimObject
     /**
      * Update replacement data.
      *
-     * @param replacement_data Replacement data to be touched.
+     * @param replacement_data
+     *  Replacement data to be touched.
+     * @param access_type
+     *  type of access. -1 for don't care, 0 for read, 1 for write.
      */
-    virtual void touch(const std::shared_ptr<ReplacementData>&
-                                                replacement_data) const = 0;
+    virtual void touch(
+      const std::shared_ptr<ReplacementData>& replacement_data,
+      int access_type = -1) const = 0;
 
     /**
      * Reset replacement data. Used when it's holder is inserted/validated.

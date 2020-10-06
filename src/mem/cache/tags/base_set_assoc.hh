@@ -122,7 +122,11 @@ class BaseSetAssoc : public BaseTags
      * @param lat The latency of the tag lookup.
      * @return Pointer to the cache block if found.
      */
-    CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat) override
+    CacheBlk* accessBlock(
+        Addr addr,
+        bool is_secure,
+        Cycles &lat,
+        int access_type) override
     {
         CacheBlk *blk = findBlock(addr, is_secure);
 
@@ -144,7 +148,7 @@ class BaseSetAssoc : public BaseTags
             blk->refCount++;
 
             // Update replacement data of accessed block
-            replacementPolicy->touch(blk->replacementData);
+            replacementPolicy->touch(blk->replacementData, access_type);
         }
 
         // The tag lookup latency is the same for a hit or a miss

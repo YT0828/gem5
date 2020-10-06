@@ -28,40 +28,25 @@
 
 /**
  * @file
- * Declaration of a Re-Reference Interval Prediction replacement policy.
- *
- * Not-Recently Used (NRU) is an approximation of LRU that uses a single bit
- * to determine if an entry is going to be re-referenced in the near or distant
- * future.
- *
- * Re-Reference Interval Prediction (RRIP) is an extension of NRU that uses a
- * re-reference prediction value to determine if entries are going to be re-
- * used in the near future or not.
- *
- * The higher the value of the RRPV, the more distant the entry is from its
- * next access.
- *
- * Bimodal Re-Reference Interval Prediction (BRRIP) is an extension of RRIP
- * that has a probability of not inserting entries as the LRU. This probability
- * is controlled by the bimodal throtle parameter (btp).
- *
- * From the original paper, this implementation of RRIP is also called
- * Static RRIP (SRRIP), as it always inserts entries with the same RRPV.
+ * Declaration of a Modified Re-Reference Interval
+ * Prediction replacement policy to implement SPM migration.
  */
 
-#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_BRRIP_RP_HH__
-#define __MEM_CACHE_REPLACEMENT_POLICIES_BRRIP_RP_HH__
+#ifndef __MEM_CACHE_REPLACEMENT_POLICIES_BRRIP_SPM_HH__
+#define __MEM_CACHE_REPLACEMENT_POLICIES_BRRIP_SPM_HH__
 
 #include "base/sat_counter.hh"
 #include "mem/cache/replacement_policies/base.hh"
 
-struct BRRIPRPParams;
+#define PR_threshold 3
+#define PR_bit 2
+struct BRRIPSPMParams;
 
-class BRRIPRP : public BaseReplacementPolicy
+class BRRIPSPM : public BaseReplacementPolicy
 {
   protected:
     /** BRRIP-specific implementation of replacement data. */
-    struct BRRIPReplData : ReplacementData
+    struct BRRIPSPMeplData : ReplacementData
     {
         /**
          * Re-Reference Interval Prediction Value.
@@ -71,15 +56,19 @@ class BRRIPRP : public BaseReplacementPolicy
          * max_RRPV -> distant re-rereference interval
          */
         SatCounter rrpv;
-
+        /**
+         * Pattern Record bit
+         * Over threshold means it is a write-intense line.
+         */
+        SatCounter pr;
         /** Whether the entry is valid. */
         bool valid;
 
         /**
          * Default constructor. Invalidate data.
          */
-        BRRIPReplData(const int num_bits)
-            : rrpv(num_bits), valid(false)
+        BRRIPSPMeplData(const int num_bits)
+            : rrpv(num_bits), pr(PR_bit), valid(false)
         {
         }
     };
@@ -107,17 +96,17 @@ class BRRIPRP : public BaseReplacementPolicy
 
   public:
     /** Convenience typedef. */
-    typedef BRRIPRPParams Params;
+    typedef BRRIPSPMParams Params;
 
     /**
      * Construct and initiliaze this replacement policy.
      */
-    BRRIPRP(const Params *p);
+    BRRIPSPM(const Params *p);
 
     /**
      * Destructor.
      */
-    ~BRRIPRP() {}
+    ~BRRIPSPM() {}
 
     /**
      * Invalidate replacement data to set it as the next probable victim.
@@ -134,8 +123,8 @@ class BRRIPRP : public BaseReplacementPolicy
      * @param replacement_data Replacement data to be touched.
      */
     void touch(
-      const std::shared_ptr<ReplacementData>& replacement_data,
-      int access_type) const override;
+        const std::shared_ptr<ReplacementData>& replacement_data,
+        int access_type = -1) const override;
 
     /**
      * Reset replacement data. Used when an entry is inserted.
@@ -147,14 +136,16 @@ class BRRIPRP : public BaseReplacementPolicy
                                                                      override;
 
     /**
-     * Find replacement victim using rrpv.
+     * Find replacement victim using pr and rrpv.
      *
      * @param cands Replacement candidates, selected by indexing policy.
      * @return Replacement entry to be replaced.
      */
-    ReplaceableEntry* getVictim(const ReplacementCandidates& candidates) const
-                                                                     override;
+    ReplaceableEntry* getVictim(const
+    ReplacementCandidates& candidates) const override;
 
+    ReplaceableEntry* getRRPVVictim(const
+    ReplacementCandidates& candidates) const;
     /**
      * Instantiate a replacement data entry.
      *

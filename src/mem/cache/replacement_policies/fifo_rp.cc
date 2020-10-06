@@ -48,7 +48,9 @@ const
 }
 
 void
-FIFORP::touch(const std::shared_ptr<ReplacementData>& replacement_data) const
+FIFORP::touch(
+    const std::shared_ptr<ReplacementData>& replacement_data,
+    int access_type = -1) const
 {
     // A touch does not modify the insertion tick
 }
